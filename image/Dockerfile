@@ -1,16 +1,17 @@
 # Sandbox image for the Harness coding agent.
 #
 #   HARNESS_SOURCE=release  (default) install the published release with
-#                           install.sh. Releases exist for linux x86-64 only.
-#   HARNESS_SOURCE=build    compile from source. Use this for linux/arm64,
-#                           for example the VM driver on Apple Silicon.
+#                           install.sh. Releases exist for linux x86-64 and
+#                           arm64 since v0.9.0.
+#   HARNESS_SOURCE=build    compile from source. Only needed for an unreleased
+#                           commit; it is slow and memory-hungry.
 #
 # Build context: the Harness repository root for HARNESS_SOURCE=build, e.g.
 #   docker build -f ../openshell-experiments/image/Dockerfile \
 #     --build-arg HARNESS_SOURCE=build -t harness-openshell:local ../harness
 # For HARNESS_SOURCE=release any small context works (`image/`).
 ARG HARNESS_SOURCE=release
-ARG HARNESS_VERSION=v0.8.0
+ARG HARNESS_VERSION=v0.9.0
 
 FROM ubuntu:24.04 AS harness-release
 ARG HARNESS_VERSION

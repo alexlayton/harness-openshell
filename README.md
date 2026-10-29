@@ -29,11 +29,12 @@ OPENROUTER_API_KEY=sk-or-... \
 
 ### Option A: build on GitHub (no local engine needed)
 
-`.github/workflows/image.yml` builds `linux/amd64` and `linux/arm64` natively,
-compiles Harness from source, and pushes a multi-arch image to GHCR:
+`.github/workflows/image.yml` builds `linux/amd64` and `linux/arm64` natively
+on their own runners, installs the published Harness release for each, and
+pushes a multi-arch image to GHCR:
 
 ```sh
-gh workflow run image.yml -f harness_ref=v0.8.0
+gh workflow run image.yml -f harness_ref=v0.9.0
 gh run watch
 ```
 
@@ -48,11 +49,10 @@ Then use `--from ghcr.io/alexlayton/harness-openshell:latest` below.
 Docker/Podman first, then a registry. A rootfs `.tar` also works.
 
 ```sh
-# linux/amd64 gateway host: published release binary
+# Installs the published release for the build host's architecture
 docker build -f image/Dockerfile -t harness-openshell:local image/
 
-# linux/arm64 (VM driver on Apple Silicon): no arm64 Linux release exists,
-# so compile from source. This is heavy; do it on a bigger machine or in CI.
+# Unreleased commit only: compile from source (slow, memory-hungry)
 docker build -f image/Dockerfile --build-arg HARNESS_SOURCE=build \
   -t harness-openshell:local ../harness
 ```
