@@ -1,0 +1,39 @@
+# DRAFT, untested end to end. ChatGPT/Codex subscription for Harness.
+# The gateway holds the refresh token and mints access tokens. The sandbox only
+# gets a stable placeholder in HARNESS_CODEX_ACCESS_TOKEN.
+id: harness-codex
+display_name: Harness (OpenAI Codex subscription)
+description: ChatGPT Codex subscription access for the Harness coding agent
+category: inference
+inference_capable: true
+
+credentials:
+  - name: access_token
+    description: Short-lived ChatGPT access token minted by the gateway
+    env_vars: [HARNESS_CODEX_ACCESS_TOKEN]
+    required: true
+    auth_style: bearer
+    header_name: authorization
+    refresh:
+      strategy: oauth2_refresh_token
+      token_url: https://auth.openai.com/oauth/token
+      refresh_before: "300s"
+      material:
+        - name: client_id
+          description: Codex OAuth client ID (public)
+          required: true
+          secret: false
+        - name: refresh_token
+          description: Dedicated refresh token for the gateway
+          required: true
+          secret: true
+
+endpoints:
+  - host: chatgpt.com
+    port: 443
+    protocol: rest
+    access: read-write
+    enforcement: enforce
+
+binaries:
+  - /usr/local/bin/harness

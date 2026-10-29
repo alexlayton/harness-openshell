@@ -1,0 +1,38 @@
+# DRAFT, untested end to end. Claude subscription for Harness.
+# Unofficial subscription protocol; it can violate provider terms.
+id: harness-claude
+display_name: Harness (Claude subscription)
+description: Claude subscription access for the Harness coding agent
+category: inference
+inference_capable: true
+
+credentials:
+  - name: access_token
+    description: Short-lived Claude access token minted by the gateway
+    env_vars: [HARNESS_CLAUDE_ACCESS_TOKEN]
+    required: true
+    auth_style: bearer
+    header_name: authorization
+    refresh:
+      strategy: oauth2_refresh_token
+      token_url: https://api.anthropic.com/v1/oauth/token
+      refresh_before: "300s"
+      material:
+        - name: client_id
+          description: Claude OAuth client ID (public)
+          required: true
+          secret: false
+        - name: refresh_token
+          description: Dedicated refresh token for the gateway
+          required: true
+          secret: true
+
+endpoints:
+  - host: api.anthropic.com
+    port: 443
+    protocol: rest
+    access: read-write
+    enforcement: enforce
+
+binaries:
+  - /usr/local/bin/harness

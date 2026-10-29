@@ -1,0 +1,28 @@
+# Provider profile: Harness -> OpenCode Go.
+# Only /usr/local/bin/harness may use the key, and only toward opencode.ai.
+id: harness-opencode-go
+display_name: Harness (OpenCode Go)
+description: OpenCode Go inference access for the Harness coding agent
+category: inference
+inference_capable: true
+
+credentials:
+  - name: api_key
+    description: OpenCode Go API key
+    env_vars: [OPENCODE_GO_API_KEY]
+    required: true
+    auth_style: bearer
+    header_name: authorization
+
+discovery:
+  credentials: [api_key]
+
+endpoints:
+  - host: opencode.ai
+    port: 443
+    protocol: rest
+    access: read-write
+    enforcement: enforce
+
+binaries:
+  - /usr/local/bin/harness
