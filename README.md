@@ -80,6 +80,66 @@ openshell sandbox create --name harness-proj --from harness-openshell:local \
 Check access: `openshell logs <name> --tail`. If a request is denied, see
 `openshell rule get <name> --status pending` and approve it if you want it.
 
+## Claude / Codex subscriptions (experimental)
+
+Harness keeps these logins in `~/.config/harness/auth.json` and refreshes them
+with single-use refresh tokens. **Do not copy that file into a sandbox:** the
+first side to refresh logs the other out, and the sandbox would hold real
+tokens. Instead, the gateway holds a separate login and the sandbox only sees
+a placeholder.
+
+```sh
+# Once: new Claude login (browser) -> gateway provider with token refresh
+scripts/claude-provider.sh
+export CLAUDE_ACCOUNT_ID=...   # printed at the end; not a secret
+
+# Run (creates the sandbox, uploads the script and project, starts Harness)
+scripts/run-claude.sh -p ~/Code/some-project "Summarize this project"
+scripts/run-claude.sh -p ~/Code/some-project            # interactive UI
+```
+
+`scripts/claude-entry.sh` runs inside the sandbox. It writes a stub
+`auth.json` from the placeholder, with a far-future expiry so Harness never
+tries to refresh it, then runs `harness`. The sandbox is kept after the run;
+remove it with `openshell sandbox delete harness-claude`. The Claude route is an unofficial subscription protocol and can
+violate provider terms. Codex follows the same pattern with
+`providers/subscriptions/harness-codex.yaml`; it is not scripted yet.
+
+## GitHub Copilot subscription (experimental)
+
+Different from Claude: the long-lived GitHub token is stored as a plain
+provider credential (no gateway refresh). Inside the sandbox, Harness trades
+the placeholder for a short-lived Copilot token itself; OpenShell swaps in the
+real GitHub token only on that one call (`api.github.com/copilot_internal/**`).
+The profile is for individual plans; edit the Copilot host for business plans.
+
+```sh
+scripts/copilot-provider.sh                      # new GitHub device login
+scripts/run-copilot.sh -p ~/Code/some-project "Say OK"
+scripts/run-copilot.sh -m gpt-4o "Say OK"        # pick a model
+```
+
+`scripts/copilot-entry.sh` runs inside the sandbox and writes the stub
+`auth.json` (already-expired access token, placeholder as `refresh`).
+
+## Getting files in and out
+
+`create --upload` cannot be combined with a command. Create the sandbox
+first, upload, then run the work with `exec`:
+
+```sh
+openshell sandbox create --name work --detach --from IMAGE --provider P -- sleep infinity
+openshell sandbox upload work ./my-project /sandbox            # lands at /sandbox/my-project
+openshell sandbox upload work ./script.sh /sandbox/bin/       # exec bit is kept
+openshell sandbox exec work --workdir /sandbox/my-project -- harness prompt ...
+openshell sandbox download work /sandbox/my-project ./results    # copy changes back
+```
+
+Uploads are copies. Edits made by the agent stay in the sandbox until you
+download them. Only `/sandbox` (the working directory) and `/tmp` are writable.
+Bind mounts of host folders exist for the VM driver but need extra gateway
+opt-in and expose host files; avoid them for untrusted work.
+
 ## Notes
 
 - State goes to `/tmp/harness`. It is lost when the sandbox is deleted.

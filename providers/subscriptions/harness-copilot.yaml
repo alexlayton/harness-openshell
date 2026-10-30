@@ -1,0 +1,46 @@
+# DRAFT. GitHub Copilot subscription for Harness.
+#
+# The credential is the long-lived GitHub token that `harness login
+# github-copilot` stores as "refresh". It is NOT refreshed by the gateway:
+# Harness itself exchanges it (GET api.github.com/copilot_internal/v2/token)
+# for a short-lived Copilot token. OpenShell swaps the placeholder for the real
+# GitHub token on that one call. The sandbox only ever holds the short-lived
+# Copilot token.
+#
+# The Copilot API host depends on the plan. This one is for individual plans
+# (proxy.individual.githubcopilot.com). Business/enterprise plans use another
+# host; change the second endpoint to match.
+id: harness-copilot
+display_name: Harness (GitHub Copilot subscription)
+description: GitHub Copilot subscription access for the Harness coding agent
+category: inference
+inference_capable: true
+
+credentials:
+  - name: github_token
+    description: Long-lived GitHub token from a dedicated Copilot login
+    env_vars: [HARNESS_COPILOT_GITHUB_TOKEN]
+    required: true
+    auth_style: bearer
+    header_name: authorization
+
+discovery:
+  credentials: [github_token]
+
+endpoints:
+  # Token exchange only. The GitHub token cannot be used on other paths.
+  - host: api.github.com
+    port: 443
+    path: /copilot_internal/**
+    protocol: rest
+    access: read-write
+    enforcement: enforce
+  # Chat and model-list calls use the short-lived Copilot token directly.
+  - host: api.individual.githubcopilot.com
+    port: 443
+    protocol: rest
+    access: read-write
+    enforcement: enforce
+
+binaries:
+  - /usr/local/bin/harness
